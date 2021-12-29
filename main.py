@@ -12,6 +12,11 @@ from fastapi.responses import FileResponse
 
 import random
 import os
+from Crypto.PublicKey import RSA
+from Crypto.Cipher import PKCS1_OAEP
+import binascii
+
+
 
 
 app = FastAPI()
@@ -32,6 +37,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+keyPair = RSA.generate(3072)
+ 
+pubKey = keyPair.publickey()
+print(f"Public key:  (n={hex(pubKey.n)}, e={hex(pubKey.e)})")
+pubKeyPEM = pubKey.exportKey()
+print(pubKeyPEM.decode('ascii'))
+ 
+print(f"Private key: (n={hex(pubKey.n)}, d={hex(keyPair.d)})")
+privKeyPEM = keyPair.exportKey()
+print(privKeyPEM.decode('ascii'))
+
+encryptor = PKCS1_OAEP.new(pubKey)
+
 def encrypt(file):
  fo = open(file, "rb")
  image=fo.read()
@@ -40,6 +58,7 @@ def encrypt(file):
  key=random.randint(0,256)
  for index,value in enumerate(image):
   image[index] = value^key
+ encrypted = encryptor.encrypt(image)
  fo=open("enc.jpg","wb")
  imageRes="enc.jpg"
  fo.write(image)
